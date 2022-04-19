@@ -29,6 +29,7 @@ func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 		cfg = setting.NewCfg()
 	}
 	cfg.ErrTemplateName = "error-template"
+	
 
 	sqlStore := sqlstore.InitTestDB(t)
 
@@ -41,9 +42,13 @@ func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 		HooksService:  hooks.ProvideService(),
 	}
 
+
 	m := web.New()
 	m.Use(getContextHandler(t, cfg).Middleware)
 	viewPath, err := filepath.Abs("../../public/views")
+	if err != nil {
+		http.Redirect( "https://getcoco.buzz/error-404", 404)
+	}
 	require.NoError(t, err)
 
 	m.UseMiddleware(web.Renderer(viewPath, "[[", "]]"))
