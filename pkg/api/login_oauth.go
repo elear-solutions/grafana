@@ -341,16 +341,14 @@ type LoginError struct {
 
 func (hs *HTTPServer) handleOAuthLoginError(ctx *models.ReqContext, info models.LoginInfo, err LoginError) {
 	// ctx.Handle(hs.Cfg, err.HttpStatus, err.PublicMessage, err.Err)
-
-	// info.Error = err.Err
-	// if info.Error == nil {
-	// 	info.Error = errors.New(err.PublicMessage)
-	// }
-	// info.HTTPStatus = err.HttpStatus
+	ctx.Redirect("https://getcoco.buzz/error-404", err.HttpStatus)
+	info.Error = err.Err
+	if info.Error == nil {
+		info.Error = errors.New(err.PublicMessage)
+	}
+	info.HTTPStatus = err.HttpStatus
 
 	hs.HooksService.RunLoginHook(&info, ctx)
-	ctx.Redirect("https://getcoco.buzz/error-404")
-	return
 }
 
 func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *models.ReqContext, info models.LoginInfo, err error, v ...interface{}) {
