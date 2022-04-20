@@ -211,11 +211,13 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 		if errors.As(err, &sErr) {
 			hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, sErr)
 		} else {
-			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
-				HttpStatus:    http.StatusInternalServerError,
-				PublicMessage: fmt.Sprintf("login.OAuthLogin(get info from %s)", name),
-				Err:           err,
-			})
+			// hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+			// 	HttpStatus:    http.StatusInternalServerError,
+			// 	PublicMessage: fmt.Sprintf("login.OAuthLogin(get info from %s)", name),
+			// 	Err:           err,
+			// })
+			ctx.Redirect("https://getcoco.buzz/error-404")
+			return nil
 		}
 		return nil
 	}
