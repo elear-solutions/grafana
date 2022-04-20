@@ -211,13 +211,11 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 		if errors.As(err, &sErr) {
 			hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, sErr)
 		} else {
-			// hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
-			// 	HttpStatus:    http.StatusInternalServerError,
-			// 	PublicMessage: fmt.Sprintf("login.OAuthLogin(get info from %s)", name),
-			// 	Err:           err,
-			// })
-			ctx.Redirect("https://getcoco.buzz/error-404")
-			return nil
+			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+				HttpStatus:    http.StatusInternalServerError,
+				PublicMessage: fmt.Sprintf("login.OAuthLogin(get info from %s)", name),
+				Err:           err,
+			})
 		}
 		return nil
 	}
@@ -342,15 +340,17 @@ type LoginError struct {
 }
 
 func (hs *HTTPServer) handleOAuthLoginError(ctx *models.ReqContext, info models.LoginInfo, err LoginError) {
-	ctx.Handle(hs.Cfg, err.HttpStatus, err.PublicMessage, err.Err)
+	// ctx.Handle(hs.Cfg, err.HttpStatus, err.PublicMessage, err.Err)
 
-	info.Error = err.Err
-	if info.Error == nil {
-		info.Error = errors.New(err.PublicMessage)
-	}
-	info.HTTPStatus = err.HttpStatus
+	// info.Error = err.Err
+	// if info.Error == nil {
+	// 	info.Error = errors.New(err.PublicMessage)
+	// }
+	// info.HTTPStatus = err.HttpStatus
 
 	hs.HooksService.RunLoginHook(&info, ctx)
+	ctx.Redirect("https://getcoco.buzz/error-404")
+	return nil;
 }
 
 func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *models.ReqContext, info models.LoginInfo, err error, v ...interface{}) {
