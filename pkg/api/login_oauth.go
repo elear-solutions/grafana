@@ -350,7 +350,7 @@ func (hs *HTTPServer) handleOAuthLoginError(ctx *models.ReqContext, info models.
 
 	hs.HooksService.RunLoginHook(&info, ctx)
 	ctx.Redirect("https://getcoco.buzz/error-404")
-	return nil;
+	return
 }
 
 func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *models.ReqContext, info models.LoginInfo, err error, v ...interface{}) {
