@@ -211,9 +211,9 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 		if errors.As(err, &sErr) {
 			hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, sErr)
 		} else {
-			hs.cocohandleOAuthLoginError(ctx, loginInfo, LoginError{
-				HttpStatus:    http.StatusInternalServerError,
-				PublicMessage: fmt.Sprintf("login.OAuthLogin(get info from %s)", name),
+			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+				HttpStatus:    http.StatusUnauthorized,
+				PublicMessage: fmt.Sprintf("user is not authorized to login"),
 				Err:           err,
 			})
 		}
