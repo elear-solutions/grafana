@@ -352,7 +352,7 @@ func (hs *HTTPServer) handleOAuthLoginError(ctx *models.ReqContext, info models.
 
 func (hs *HTTPServer) cocohandleOAuthLoginError(ctx *models.ReqContext, info models.LoginInfo, err LoginError) {
 	// ctx.Handle(hs.Cfg, err.HttpStatus, err.PublicMessage, err.Err)
-	ctx.Redirect("http://15.206.73.214:30053/")
+	ctx.Redirect("https://error.getcoco.buzz/")
 	info.Error = err.Err
 	if info.Error == nil {
 		info.Error = errors.New(err.PublicMessage)
