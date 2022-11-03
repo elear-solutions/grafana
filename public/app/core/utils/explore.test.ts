@@ -1,3 +1,10 @@
+import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { RefreshPicker } from '@grafana/ui';
+import store from 'app/core/store';
+
+import { ExploreId } from '../../types';
+
 import {
   buildQueryTransaction,
   clearHistory,
@@ -13,11 +20,6 @@ import {
   getTimeRangeFromUrl,
   getTimeRange,
 } from './explore';
-import store from 'app/core/store';
-import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
-import { RefreshPicker } from '@grafana/ui';
-import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
-import { ExploreId } from '../../types';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: '',
@@ -233,7 +235,7 @@ describe('hasNonEmptyQuery', () => {
 describe('hasRefId', () => {
   describe('when called with a null value', () => {
     it('then it should return undefined', () => {
-      const input: any = null;
+      const input = null;
       const result = getValueWithRefId(input);
 
       expect(result).toBeUndefined();
@@ -326,7 +328,7 @@ describe('getTimeRange', () => {
 describe('getRefIds', () => {
   describe('when called with a null value', () => {
     it('then it should return empty array', () => {
-      const input: any = null;
+      const input = null;
       const result = getRefIds(input);
 
       expect(result).toEqual([]);
@@ -362,7 +364,7 @@ describe('getRefIds', () => {
 
   describe('when called with an object that has refIds somewhere in the object tree', () => {
     it('then it should return return an array with unique refIds', () => {
-      const input: any = {
+      const input = {
         data: [
           123,
           null,

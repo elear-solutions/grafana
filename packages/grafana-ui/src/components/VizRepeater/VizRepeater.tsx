@@ -1,5 +1,7 @@
 import React, { PureComponent, CSSProperties } from 'react';
+
 import { VizOrientation } from '@grafana/data';
+
 import { calculateGridDimensions } from '../../utils/squares';
 
 interface Props<V, D> {
@@ -17,7 +19,7 @@ interface Props<V, D> {
   renderValue: (props: VizRepeaterRenderValueProps<V, D>) => JSX.Element;
   height: number;
   width: number;
-  source: any; // If this changes, new values will be requested
+  source: unknown; // If this changes, new values will be requested
   getValues: () => V[];
   renderCounter: number; // force update of values & render
   orientation: VizOrientation;

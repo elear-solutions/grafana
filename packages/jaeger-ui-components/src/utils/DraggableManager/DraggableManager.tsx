@@ -14,9 +14,10 @@
 
 import { get as _get } from 'lodash';
 
+import { TNil } from '../../types';
+
 import EUpdateTypes from './EUpdateTypes';
 import { DraggableBounds, DraggingUpdate } from './types';
-import { TNil } from '../../types';
 
 const LEFT_MOUSE_BUTTON = 0;
 
@@ -112,7 +113,7 @@ export default class DraggableManager {
     window.removeEventListener('mouseup', this._handleDragEvent);
     const style = _get(document, 'body.style');
     if (style) {
-      style.userSelect = null;
+      style.userSelect = 'auto';
     }
     this._isDragging = false;
   }

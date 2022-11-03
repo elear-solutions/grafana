@@ -1,13 +1,14 @@
+import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
-import { css } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Modal } from '../Modal/Modal';
+import { HorizontalGroup, Input } from '..';
+import { useStyles2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { Button } from '../Button';
-import { useStyles2 } from '../../themes';
-import { HorizontalGroup, Input } from '..';
+import { Modal } from '../Modal/Modal';
 
 export interface ConfirmModalProps {
   /** Toggle modal's open/closed state */
@@ -24,6 +25,8 @@ export interface ConfirmModalProps {
   dismissText?: string;
   /** Icon for the modal header */
   icon?: IconName;
+  /** Additional styling for modal container */
+  modalClass?: string;
   /** Text user needs to fill in before confirming */
   confirmationText?: string;
   /** Text for alternative button */
@@ -45,6 +48,7 @@ export const ConfirmModal = ({
   confirmationText,
   dismissText = 'Cancel',
   alternativeText,
+  modalClass,
   icon = 'exclamation-triangle',
   onConfirm,
   onDismiss,
@@ -65,7 +69,7 @@ export const ConfirmModal = ({
   }, [isOpen]);
 
   return (
-    <Modal className={styles.modal} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
+    <Modal className={cx(styles.modal, modalClass)} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
       <div className={styles.modalText}>
         {body}
         {description ? <div className={styles.modalDescription}>{description}</div> : null}

@@ -1,16 +1,29 @@
-import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
+import { DataTransformerConfig, FieldConfigSource } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { getPanelOptionsWithDefaults } from 'app/features/dashboard/state/getPanelOptionsWithDefaults';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
+import { LibraryElementDTO } from 'app/features/library-panels/types';
+import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { ThunkResult } from 'app/types';
-import { changePanelKey, panelModelAndPluginReady } from './reducers';
-import { LibraryElementDTO } from 'app/features/library-panels/types';
-import { toPanelModelLibraryPanel } from 'app/features/library-panels/utils';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
-import { DataTransformerConfig, FieldConfigSource } from '@grafana/data';
-import { getPanelOptionsWithDefaults } from 'app/features/dashboard/state/getPanelOptionsWithDefaults';
+
+import {
+  changePanelKey,
+  cleanUpAngularComponent,
+  panelModelAndPluginReady,
+  removePanel,
+  removePanels,
+} from './reducers';
 
 export function initPanelState(panel: PanelModel): ThunkResult<void> {
   return async (dispatch, getStore) => {
+    if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
+      // this will call init with a loaded libary panel if it loads succesfully
+      dispatch(loadLibraryPanelAndUpdate(panel));
+      return;
+    }
+
     let pluginToLoad = panel.type;
     let plugin = getStore().plugins.panels[pluginToLoad];
 
@@ -28,6 +41,24 @@ export function initPanelState(panel: PanelModel): ThunkResult<void> {
     }
 
     dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
+  };
+}
+
+export function cleanUpPanelState(panelKey: string): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const store = getStore().panels;
+    cleanUpAngularComponent(store[panelKey]);
+    dispatch(removePanel({ key: panelKey }));
+  };
+}
+
+export function cleanAndRemoveMany(panelKeys: string[]): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const store = getStore().panels;
+    for (const key of panelKeys) {
+      cleanUpAngularComponent(store[key]);
+    }
+    dispatch(removePanels({ keys: panelKeys }));
   };
 }
 
@@ -93,7 +124,7 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
       ...libraryPanel.model,
       gridPos: panel.gridPos,
       id: panel.id,
-      libraryPanel: toPanelModelLibraryPanel(libraryPanel),
+      libraryPanel: libraryPanel,
     });
 
     // a new library panel usually means new queries, clear any current result
@@ -123,9 +154,29 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
     }
 
     panel.configRev = 0;
+    panel.hasSavedPanelEditChange = true;
     panel.refresh();
 
     panel.events.publish(PanelQueriesChangedEvent);
     panel.events.publish(PanelOptionsChangedEvent);
+  };
+}
+
+export function loadLibraryPanelAndUpdate(panel: PanelModel): ThunkResult<void> {
+  return async (dispatch) => {
+    const uid = panel.libraryPanel!.uid!;
+    try {
+      const libPanel = await getLibraryPanel(uid, true);
+      panel.initLibraryPanel(libPanel);
+      dispatch(initPanelState(panel));
+    } catch (ex) {
+      console.log('ERROR: ', ex);
+      dispatch(
+        panelModelAndPluginReady({
+          key: panel.key,
+          plugin: getPanelPluginNotFound('Unable to load library panel: ' + uid, false),
+        })
+      );
+    }
   };
 }

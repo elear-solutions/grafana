@@ -5,22 +5,55 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"path"
 	"strconv"
 	"strings"
 	"time"
 
-	"go.opentelemetry.io/otel/attribute"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *backend.QueryDataRequest) string {
+	// GraphPeriod needs to be explicitly disabled.
+	// If not set, the default behavior is to set an automatic value
+	if timeSeriesQuery.GraphPeriod != "disabled" {
+		if timeSeriesQuery.GraphPeriod == "auto" || timeSeriesQuery.GraphPeriod == "" {
+			intervalCalculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
+			interval := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
+			timeSeriesQuery.GraphPeriod = interval.Text
+		}
+		return fmt.Sprintf(" | graph_period %s", timeSeriesQuery.GraphPeriod)
+	}
+	return ""
+}
+
+func doRequestQueryPage(requestBody map[string]interface{}, r *http.Request, dsInfo datasourceInfo) (cloudMonitoringResponse, error) {
+	buf, err := json.Marshal(requestBody)
+	if err != nil {
+		return cloudMonitoringResponse{}, err
+	}
+	r.Body = io.NopCloser(bytes.NewBuffer(buf))
+	res, err := dsInfo.services[cloudMonitor].client.Do(r)
+	if err != nil {
+		return cloudMonitoringResponse{}, err
+	}
+
+	dnext, err := unmarshalResponse(res)
+	if err != nil {
+		return cloudMonitoringResponse{}, err
+	}
+	return dnext, nil
+}
+
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
 	dr := &backend.DataResponse{}
 	projectName := timeSeriesQuery.ProjectName
@@ -35,52 +68,53 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
 
-	intervalCalculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
-	interval := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
-
+	timeSeriesQuery.Query += timeSeriesQuery.appendGraphPeriod(req)
 	from := req.Queries[0].TimeRange.From
 	to := req.Queries[0].TimeRange.To
 	timeFormat := "2006/01/02-15:04:05"
-	timeSeriesQuery.Query += fmt.Sprintf(" | graph_period %s | within d'%s', d'%s'", interval.Text, from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
-
-	buf, err := json.Marshal(map[string]interface{}{
-		"query": timeSeriesQuery.Query,
-	})
-	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
-	}
-	r, err := s.createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries:query"), bytes.NewBuffer(buf))
-	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
-	}
+	timeSeriesQuery.Query += fmt.Sprintf(" | within d'%s', d'%s'", from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
+	p := path.Join("/v3/projects", projectName, "timeSeries:query")
 
 	ctx, span := tracer.Start(ctx, "cloudMonitoring MQL query")
 	span.SetAttributes("query", timeSeriesQuery.Query, attribute.Key("query").String(timeSeriesQuery.Query))
 	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
 	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
-
 	defer span.End()
-	tracer.Inject(ctx, r.Header, span)
 
-	r = r.WithContext(ctx)
-	res, err := dsInfo.services[cloudMonitor].client.Do(r)
+	requestBody := map[string]interface{}{
+		"query": timeSeriesQuery.Query,
+	}
+	r, err := s.createRequest(ctx, &dsInfo, p, bytes.NewBuffer([]byte{}))
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
 	}
+	tracer.Inject(ctx, r.Header, span)
+	r = r.WithContext(ctx)
 
-	d, err := unmarshalResponse(res)
+	d, err := doRequestQueryPage(requestBody, r, dsInfo)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
+	}
+	for d.NextPageToken != "" {
+		requestBody := map[string]interface{}{
+			"query":     timeSeriesQuery.Query,
+			"pageToken": d.NextPageToken,
+		}
+		nextPage, err := doRequestQueryPage(requestBody, r, dsInfo)
+		if err != nil {
+			dr.Error = err
+			return dr, cloudMonitoringResponse{}, "", nil
+		}
+		d.TimeSeriesData = append(d.TimeSeriesData, nextPage.TimeSeriesData...)
+		d.NextPageToken = nextPage.NextPageToken
 	}
 
 	return dr, d, timeSeriesQuery.Query, nil
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
 	frames := data.Frames{}
 
@@ -243,7 +277,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 	}
 	if len(response.TimeSeriesData) > 0 {
 		dl := timeSeriesQuery.buildDeepLink()
-		frames = addConfigData(frames, dl, response.Unit)
+		frames = addConfigData(frames, dl, response.Unit, timeSeriesQuery.GraphPeriod)
 	}
 
 	queryRes.Frames = frames
@@ -251,9 +285,9 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 	return nil
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *backend.DataResponse,
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *backend.DataResponse,
 	data cloudMonitoringResponse, title, text string) error {
-	annotations := make([]map[string]string, 0)
+	annotations := make([]*annotationEvent, 0)
 
 	for _, series := range data.TimeSeriesData {
 		metricLabels := make(map[string]string)
@@ -289,12 +323,12 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRe
 				if d.ValueType == "STRING" {
 					value = point.Values[n].StringValue
 				}
-				annotation := make(map[string]string)
-				annotation["time"] = point.TimeInterval.EndTime.UTC().Format(time.RFC3339)
-				annotation["title"] = formatAnnotationText(title, value, d.MetricKind, metricLabels, resourceLabels)
-				annotation["tags"] = ""
-				annotation["text"] = formatAnnotationText(text, value, d.MetricKind, metricLabels, resourceLabels)
-				annotations = append(annotations, annotation)
+				annotations = append(annotations, &annotationEvent{
+					Time:  point.TimeInterval.EndTime,
+					Title: formatAnnotationText(title, value, d.MetricKind, metricLabels, resourceLabels),
+					Tags:  "",
+					Text:  formatAnnotationText(text, value, d.MetricKind, metricLabels, resourceLabels),
+				})
 			}
 		}
 	}
@@ -303,7 +337,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRe
 	return nil
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
 	if err != nil {
 		slog.Error("Failed to generate deep link: unable to parse metrics explorer URL", "projectName", timeSeriesQuery.ProjectName, "query", timeSeriesQuery.RefID)
@@ -358,6 +392,6 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 	return accountChooserURL.String()
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) getRefID() string {
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) getRefID() string {
 	return timeSeriesQuery.RefID
 }

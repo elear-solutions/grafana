@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme, KeyValue } from '@grafana/data';
-import { SegmentInput, useStyles, InlineLabel, Icon } from '@grafana/ui';
 import React from 'react';
+
+import { GrafanaTheme2, KeyValue } from '@grafana/data';
+import { SegmentInput, useStyles2, InlineLabel, Icon } from '@grafana/ui';
 
 const EQ_WIDTH = 3; // = 24px in inline label
 
@@ -20,7 +21,7 @@ const KeyValueInput = ({
   keyPlaceholder = 'Key',
   valuePlaceholder = 'Value (optional)',
 }: Props) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.wrapper}>
@@ -64,6 +65,7 @@ const KeyValueInput = ({
               onClick={() => onChange([...values.slice(0, idx), ...values.slice(idx + 1)])}
               className="gf-form-label query-part"
               aria-label="Remove tag"
+              type="button"
             >
               <Icon name="times" />
             </button>
@@ -72,6 +74,7 @@ const KeyValueInput = ({
                 onClick={() => onChange([...values, { key: '', value: '' }])}
                 className="gf-form-label query-part"
                 aria-label="Add tag"
+                type="button"
               >
                 <Icon name="plus" />
               </button>
@@ -83,6 +86,7 @@ const KeyValueInput = ({
           onClick={() => onChange([...values, { key: '', value: '' }])}
           className="gf-form-label query-part"
           aria-label="Add tag"
+          type="button"
         >
           <Icon name="plus" />
         </button>
@@ -93,11 +97,11 @@ const KeyValueInput = ({
 
 export default KeyValueInput;
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: flex;
     flex-direction: column;
-    gap: ${theme.spacing.xs} 0;
+    gap: ${theme.spacing(0.5)} 0;
   `,
   pair: css`
     display: flex;
@@ -105,6 +109,6 @@ const getStyles = (theme: GrafanaTheme) => ({
     align-items: center;
   `,
   operator: css`
-    color: ${theme.palette.orange};
+    color: ${theme.v1.palette.orange};
   `,
 });

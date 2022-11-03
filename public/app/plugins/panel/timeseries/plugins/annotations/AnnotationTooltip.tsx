@@ -1,11 +1,13 @@
-import React from 'react';
 import { css } from '@emotion/css';
-import { HorizontalGroup, IconButton, Tag, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, textUtil } from '@grafana/data';
+import React from 'react';
 
+import { GrafanaTheme2, textUtil } from '@grafana/data';
+import { HorizontalGroup, IconButton, Tag, useStyles2 } from '@grafana/ui';
+import config from 'app/core/config';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { CommentManager } from 'app/features/comments/CommentManager';
-import config from 'app/core/config';
+
+import { AnnotationsDataFrameViewDTO } from '../types';
 
 interface AnnotationTooltipProps {
   annotation: AnnotationsDataFrameViewDTO;
@@ -37,7 +39,7 @@ export const AnnotationTooltip = ({
   const ts = <span className={styles.time}>{Boolean(annotation.isRegion) ? `${time} - ${timeEnd}` : time}</span>;
 
   if (annotation.login && annotation.avatarUrl) {
-    avatar = <img className={styles.avatar} src={annotation.avatarUrl} />;
+    avatar = <img className={styles.avatar} alt="Annotation avatar" src={annotation.avatarUrl} />;
   }
 
   if (annotation.alertId !== undefined && annotation.newState) {

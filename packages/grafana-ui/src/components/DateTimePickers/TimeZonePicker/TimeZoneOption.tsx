@@ -1,18 +1,21 @@
-import React, { PropsWithChildren } from 'react';
 import { css, cx } from '@emotion/css';
+import { isString } from 'lodash';
+import React, { PropsWithChildren } from 'react';
+
 import { GrafanaTheme2, SelectableValue, getTimeZoneInfo } from '@grafana/data';
+
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { stylesFactory } from '../../../themes/stylesFactory';
 import { Icon } from '../../Icon/Icon';
-import { TimeZoneOffset } from './TimeZoneOffset';
+
 import { TimeZoneDescription } from './TimeZoneDescription';
+import { TimeZoneOffset } from './TimeZoneOffset';
 import { TimeZoneTitle } from './TimeZoneTitle';
-import { isString } from 'lodash';
 
 interface Props {
   isFocused: boolean;
   isSelected: boolean;
-  innerProps: any;
+  innerProps: JSX.IntrinsicElements['div'];
   data: SelectableZone;
 }
 
@@ -62,7 +65,7 @@ export const WideTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, re
   );
 };
 
-export const CompactTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, ref) => {
+export const CompactTimeZoneOption: React.FC<React.PropsWithChildren<Props>> = (props, ref) => {
   const { children, innerProps, data, isSelected, isFocused } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);

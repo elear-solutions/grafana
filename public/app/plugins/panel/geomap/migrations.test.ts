@@ -1,4 +1,5 @@
 import { PanelModel, FieldConfigSource } from '@grafana/data';
+
 import { mapMigrationHandler, mapPanelChangedHandler } from './migrations';
 describe('Worldmap Migrations', () => {
   let prevFieldConfig: FieldConfigSource;
@@ -55,6 +56,9 @@ describe('Worldmap Migrations', () => {
             "showZoom": true,
           },
           "layers": Array [],
+          "tooltip": Object {
+            "mode": "details",
+          },
           "view": Object {
             "id": "europe",
             "lat": 46,
@@ -134,7 +138,7 @@ describe('geomap migrations', () => {
         ],
       },
       pluginVersion: '8.2.0',
-    } as any as PanelModel;
+    } as unknown as PanelModel;
     panel.options = mapMigrationHandler(panel);
 
     expect(panel).toMatchInlineSnapshot(`

@@ -1,4 +1,5 @@
 import { DefaultTimeZone, toUtc } from '@grafana/data';
+
 import { ExploreId } from '../../../types';
 
 export const createDefaultInitialState = () => {
@@ -39,6 +40,7 @@ export const createDefaultInitialState = () => {
         },
         cache: [],
         richHistory: [],
+        logsVolumeEnabled: true,
       },
     },
   };

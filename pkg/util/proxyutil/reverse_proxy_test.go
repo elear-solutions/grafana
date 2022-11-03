@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,6 +31,11 @@ func TestReverseProxy(t *testing.T) {
 		req.Header.Set("Referer", "https://test.com/api")
 		req.RemoteAddr = "10.0.0.1"
 
+		const customHeader = "X-CUSTOM"
+		req.Header.Set(customHeader, "val")
+		ctx := contexthandler.WithAuthHTTPHeader(req.Context(), customHeader)
+		req = req.WithContext(ctx)
+
 		rp := NewReverseProxy(log.New("test"), func(req *http.Request) {
 			req.Header.Set("X-KEY", "value")
 		})
@@ -49,6 +55,7 @@ func TestReverseProxy(t *testing.T) {
 		require.Empty(t, resp.Cookies())
 		require.Equal(t, "sandbox", resp.Header.Get("Content-Security-Policy"))
 		require.NoError(t, resp.Body.Close())
+		require.Empty(t, actualReq.Header.Get(customHeader))
 	})
 
 	t.Run("When proxying a request using WithModifyResponse should call it before default ModifyResponse func", func(t *testing.T) {
@@ -86,11 +93,12 @@ func TestReverseProxy(t *testing.T) {
 
 	t.Run("Error handling should convert status codes depending on what kind of error it is", func(t *testing.T) {
 		timedOutTransport := http.DefaultTransport.(*http.Transport)
-		timedOutTransport.ResponseHeaderTimeout = time.Nanosecond
+		timedOutTransport.ResponseHeaderTimeout = time.Millisecond
 
 		testCases := []struct {
 			desc               string
 			transport          http.RoundTripper
+			responseWaitTime   time.Duration
 			expectedStatusCode int
 		}{
 			{
@@ -101,6 +109,7 @@ func TestReverseProxy(t *testing.T) {
 			{
 				desc:               "Timed out request should return 504 Gateway timeout",
 				transport:          timedOutTransport,
+				responseWaitTime:   100 * time.Millisecond,
 				expectedStatusCode: http.StatusGatewayTimeout,
 			},
 			{
@@ -113,6 +122,10 @@ func TestReverseProxy(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				upstream := newUpstreamServer(t, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+					if tc.responseWaitTime > 0 {
+						time.Sleep(tc.responseWaitTime)
+					}
+
 					w.WriteHeader(http.StatusOK)
 				}))
 				t.Cleanup(upstream.Close)

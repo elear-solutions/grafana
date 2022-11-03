@@ -1,8 +1,10 @@
+import { render, screen, fireEvent } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 import { Observable } from 'rxjs';
-import { render, screen, fireEvent } from '@testing-library/react';
+
 import { TimeRange, LoadingState, InternalTimeZones } from '@grafana/data';
 import { ExploreId } from 'app/types';
+
 import { ExploreQueryInspector } from './ExploreQueryInspector';
 
 type ExploreQueryInspectorProps = ComponentProps<typeof ExploreQueryInspector>;
@@ -27,6 +29,11 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: () => null,
+}));
+
 const setup = (propOverrides = {}) => {
   const props: ExploreQueryInspectorProps = {
     loading: false,
@@ -43,6 +50,7 @@ const setup = (propOverrides = {}) => {
       tableFrames: [],
       traceFrames: [],
       nodeGraphFrames: [],
+      flameGraphFrames: [],
       graphResult: null,
       logsResult: null,
       tableResult: null,

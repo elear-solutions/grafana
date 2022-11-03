@@ -1,6 +1,9 @@
+import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
+
 import {
   AbsoluteTimeRange,
   DataSourceApi,
+  DataSourceRef,
   EventBusExtended,
   ExploreUrlState,
   getDefaultTimeRange,
@@ -10,11 +13,12 @@ import {
 } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
 import { ExploreGraphStyle, ExploreItemState } from 'app/types/explore';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
+
 import store from '../../../core/store';
 import { clearQueryKeys, lastUsedDatasourceKeyForOrgId, toGraphStyle } from '../../../core/utils/explore';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import { SETTINGS_KEYS } from '../utils/logs';
 import { toRawTimeRange } from '../utils/time';
-import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -29,6 +33,21 @@ export const storeGraphStyle = (graphStyle: string): void => {
 const loadGraphStyle = (): ExploreGraphStyle => {
   const data = store.get(GRAPH_STYLE_KEY);
   return toGraphStyle(data);
+};
+
+const LOGS_VOLUME_ENABLED_KEY = SETTINGS_KEYS.enableVolumeHistogram;
+export const storeLogsVolumeEnabled = (enabled: boolean): void => {
+  store.set(LOGS_VOLUME_ENABLED_KEY, enabled ? 'true' : 'false');
+};
+
+const loadLogsVolumeEnabled = (): boolean => {
+  const data = store.get(LOGS_VOLUME_ENABLED_KEY);
+  // we default to `enabled=true`
+  if (data === 'false') {
+    return false;
+  }
+
+  return true;
 };
 
 /**
@@ -62,6 +81,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
   richHistory: [],
+  logsVolumeEnabled: loadLogsVolumeEnabled(),
   logsVolumeDataProvider: undefined,
   logsVolumeData: undefined,
   graphStyle: loadGraphStyle(),
@@ -76,6 +96,7 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
   logsFrames: [],
   traceFrames: [],
   nodeGraphFrames: [],
+  flameGraphFrames: [],
   tableFrames: [],
   graphResult: null,
   logsResult: null,
@@ -84,11 +105,12 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
 
 export async function loadAndInitDatasource(
   orgId: number,
-  datasourceUid?: string
+  datasource: DataSourceRef | string
 ): Promise<{ history: HistoryItem[]; instance: DataSourceApi }> {
   let instance;
   try {
-    instance = await getDatasourceSrv().get(datasourceUid);
+    // let datasource be a ref if we have the info, otherwise a name or uid will do for lookup
+    instance = await getDatasourceSrv().get(datasource);
   } catch (error) {
     // Falling back to the default data source in case the provided data source was not found.
     // It may happen if last used data source or the data source provided in the URL has been
@@ -127,7 +149,7 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
   return {
     // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
     // lets just fallback instead of crashing.
-    datasource: pane.datasourceInstance?.name || '',
+    datasource: pane.datasourceInstance?.uid || '',
     queries: pane.queries.map(clearQueryKeys),
     range: toRawTimeRange(pane.range),
     // don't include panelsState in the url unless a piece of state is actually set

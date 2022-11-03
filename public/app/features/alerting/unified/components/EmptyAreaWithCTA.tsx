@@ -1,7 +1,9 @@
-import React, { ButtonHTMLAttributes, FC } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { Button, ButtonVariant, IconName, LinkButton, useStyles } from '@grafana/ui';
+import React, { ButtonHTMLAttributes, FC } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, ButtonVariant, IconName, LinkButton, useStyles2 } from '@grafana/ui';
+
 import { EmptyArea } from './EmptyArea';
 
 export interface EmptyAreaWithCTAProps {
@@ -26,7 +28,7 @@ export const EmptyAreaWithCTA: FC<EmptyAreaWithCTAProps> = ({
   href,
   showButton = true,
 }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const commonProps = {
     className: styles.button,
@@ -54,19 +56,19 @@ export const EmptyAreaWithCTA: FC<EmptyAreaWithCTAProps> = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
-      background-color: ${theme.colors.bg2};
-      color: ${theme.colors.textSemiWeak};
-      padding: ${theme.spacing.xl};
+      background-color: ${theme.colors.background.secondary};
+      color: ${theme.colors.text.secondary};
+      padding: ${theme.spacing(4)};
       text-align: center;
     `,
     text: css`
-      margin-bottom: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing(2)};
     `,
     button: css`
-      margin: ${theme.spacing.md} 0 ${theme.spacing.sm};
+      margin: ${theme.spacing(2, 0, 1)};
     `,
   };
 };

@@ -1,6 +1,7 @@
-import React from 'react';
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
+import React from 'react';
+
 import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
 import { useStyles2, Icon, Badge, IconName } from '@grafana/ui';
 
@@ -43,7 +44,7 @@ export function PluginSignatureDetailsBadge({ signatureType, signatureOrg = '' }
   );
 }
 
-export const DetailsBadge: React.FC = ({ children }) => {
+export const DetailsBadge = ({ children }: React.PropsWithChildren<{}>) => {
   const styles = useStyles2(getStyles);
 
   return <Badge color="green" className={styles.badge} text={<>{children}</>} />;

@@ -1,15 +1,17 @@
 import { css } from '@emotion/css';
+import React from 'react';
+
 import {
   DataSourceJsonData,
   DataSourceInstanceSettings,
   DataSourcePluginOptionsEditorProps,
-  GrafanaTheme,
+  GrafanaTheme2,
   KeyValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, Input, TagsInput, useStyles, InlineSwitch } from '@grafana/ui';
-import React from 'react';
+import { InlineField, InlineFieldRow, Input, TagsInput, useStyles2, InlineSwitch } from '@grafana/ui';
+
 import KeyValueInput from './KeyValueInput';
 
 export interface TraceToLogsOptions {
@@ -31,21 +33,22 @@ export interface TraceToLogsData extends DataSourceJsonData {
 interface Props extends DataSourcePluginOptionsEditorProps<TraceToLogsData> {}
 
 export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
+  const supportedDataSourceTypes = ['loki', 'grafana-splunk-datasource', 'elasticsearch'];
 
   return (
     <div className={css({ width: '100%' })}>
       <h3 className="page-heading">Trace to logs</h3>
 
       <div className={styles.infoText}>
-        Trace to logs lets you navigate from a trace span to the selected data source&apos;s log.
+        Trace to logs lets you navigate from a trace span to the selected data source&apos;s logs.
       </div>
 
       <InlineFieldRow>
         <InlineField tooltip="The data source the trace is going to navigate to" label="Data source" labelWidth={26}>
           <DataSourcePicker
             inputId="trace-to-logs-data-source-picker"
-            logs
+            filter={(ds) => supportedDataSourceTypes.includes(ds.type)}
             current={options.jsonData.tracesToLogs?.datasourceUid}
             noDefault={true}
             width={40}
@@ -211,9 +214,9 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`
-    padding-bottom: ${theme.spacing.md};
-    color: ${theme.colors.textSemiWeak};
+    padding-bottom: ${theme.spacing(2)};
+    color: ${theme.colors.text.secondary};
   `,
 });

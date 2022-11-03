@@ -1,9 +1,10 @@
 import { DataFrameDTO, FieldConfig } from './dataFrame';
-import { DataTransformerConfig } from './transformations';
-import { ApplyFieldOverrideOptions } from './fieldOverrides';
-import { PanelPluginDataSupport } from '.';
-import { DataTopic } from './query';
 import { DataFrameType } from './dataFrameTypes';
+import { ApplyFieldOverrideOptions } from './fieldOverrides';
+import { DataTopic } from './query';
+import { DataTransformerConfig } from './transformations';
+
+import { PanelPluginDataSupport } from '.';
 
 export type KeyValue<T = any> = Record<string, T>;
 
@@ -20,7 +21,7 @@ export enum LoadingState {
 }
 
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
-export const preferredVisualizationTypes = ['graph', 'table', 'logs', 'trace', 'nodeGraph'] as const;
+export const preferredVisualizationTypes = ['graph', 'table', 'logs', 'trace', 'nodeGraph', 'flamegraph'] as const;
 export type PreferredVisualisationType = typeof preferredVisualizationTypes[number];
 
 /**
@@ -47,6 +48,9 @@ export interface QueryResultMeta {
   /** The path for live stream updates for this frame */
   channel?: string;
 
+  /** Did the query response come from the cache */
+  isCachedResponse?: boolean;
+
   /**
    * Optionally identify which topic the frame should be assigned to.
    * A value specified in the response will override what the request asked for.
@@ -72,7 +76,6 @@ export interface QueryResultMeta {
   /**
    * Legacy data source specific, should be moved to custom
    * */
-  alignmentPeriod?: number; // used by cloud monitoring
   searchWords?: string[]; // used by log models and loki
   limit?: number; // used by log models and loki
   json?: boolean; // used to keep track of old json doc values

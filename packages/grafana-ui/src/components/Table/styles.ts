@@ -1,6 +1,6 @@
 import { css, CSSObject } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { getScrollbarWidth } from '../../utils';
 
 export const getTableStyles = (theme: GrafanaTheme2) => {
   const { colors } = theme;
@@ -12,7 +12,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
   const bodyFontSize = 14;
   const cellHeight = cellPadding * 2 + bodyFontSize * lineHeight;
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
-  const lastChildExtraPadding = Math.max(getScrollbarWidth(), cellPadding);
 
   const buildCellContainerStyle = (color?: string, background?: string, overflowOnHover?: boolean) => {
     const cellActionsOverflow: CSSObject = {
@@ -48,7 +47,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
 
       &:last-child:not(:only-child) {
         border-right: none;
-        padding-right: ${lastChildExtraPadding}px;
       }
 
       &:hover {
@@ -96,7 +94,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
     cellHeight,
     buildCellContainerStyle,
     cellPadding,
-    lastChildExtraPadding,
     cellHeightInner: bodyFontSize * lineHeight,
     rowHeight: cellHeight + 2,
     table: css`
@@ -104,6 +101,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       width: 100%;
       overflow: auto;
       display: flex;
+      flex-direction: column;
     `,
     thead: css`
       label: thead;
@@ -163,12 +161,13 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
     imageCellLink: css`
       cursor: pointer;
       overflow: hidden;
-      width: 100%;
       height: 100%;
     `,
     headerFilter: css`
+      background: transparent;
+      border: none;
       label: headerFilter;
-      cursor: pointer;
+      padding: 0;
     `,
     paginationWrapper: css`
       display: flex;
@@ -181,21 +180,34 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       li {
         margin-bottom: 0;
       }
-      div:not(:only-child):first-child {
-        flex-grow: 0.6;
-      }
+    `,
+    paginationItem: css`
+      flex: 20%;
+    `,
+    paginationCenterItem: css`
+      flex: 100%;
+      display: flex;
+      justify-content: center;
     `,
     paginationSummary: css`
       color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
-      margin-left: auto;
+      display: flex;
+      justify-content: flex-end;
+      flex: 20%;
+      padding-right: ${theme.spacing(1)};
     `,
 
-    tableContentWrapper: (totalColumnsWidth: number) => css`
-      width: ${totalColumnsWidth ?? '100%'};
-      display: flex;
-      flex-direction: column;
-    `,
+    tableContentWrapper: (totalColumnsWidth: number) => {
+      const width = totalColumnsWidth !== undefined ? `${totalColumnsWidth}px` : '100%';
+
+      return css`
+        label: tableContentWrapper;
+        width: ${width};
+        display: flex;
+        flex-direction: column;
+      `;
+    },
     row: css`
       label: row;
       border-bottom: 1px solid ${borderColor};

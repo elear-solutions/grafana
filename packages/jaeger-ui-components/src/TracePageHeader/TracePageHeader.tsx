@@ -12,25 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
-import { get as _get, maxBy as _maxBy, values as _values } from 'lodash';
-import MdKeyboardArrowRight from 'react-icons/lib/md/keyboard-arrow-right';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { get as _get, maxBy as _maxBy, values as _values } from 'lodash';
+import * as React from 'react';
+import MdKeyboardArrowRight from 'react-icons/lib/md/keyboard-arrow-right';
+
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import SpanGraph from './SpanGraph';
 import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '..';
+import ExternalLinks from '../common/ExternalLinks';
 import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
+import { getTraceLinks } from '../model/link-patterns';
 import { getTraceName } from '../model/trace-viewer';
 import { Trace } from '../types/trace';
-import { formatDuration } from '../utils/date';
-import { getTraceLinks } from '../model/link-patterns';
-
-import ExternalLinks from '../common/ExternalLinks';
 import { uTxMuted } from '../uberUtilityStyles';
+import { formatDuration } from '../utils/date';
+
+import SpanGraph from './SpanGraph';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -82,6 +83,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       &:hover small {
         text-decoration: none;
       }
+      /* Adapt styles when changing from a element into button */
+      background: transparent;
+      text-align: left;
+      border: none;
     `,
     TracePageHeaderDetailToggle: css`
       label: TracePageHeaderDetailToggle;
@@ -235,7 +240,8 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
       <div className={styles.TracePageHeaderTitleRow}>
         {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
         {canCollapse ? (
-          <a
+          <button
+            type="button"
             className={styles.TracePageHeaderTitleLink}
             onClick={onSlimViewClicked}
             role="switch"
@@ -248,7 +254,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
               )}
             />
             {title}
-          </a>
+          </button>
         ) : (
           title
         )}

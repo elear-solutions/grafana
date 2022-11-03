@@ -1,7 +1,10 @@
-import React from 'react';
 import { css } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { useStyles2, Icon } from '@grafana/ui';
+
 import { Version, CatalogPlugin, PluginIconName } from '../types';
 
 type Props = {
@@ -27,7 +30,7 @@ export function PluginDetailsHeaderDependencies({
   }
 
   return (
-    <div className={className}>
+    <Stack gap={1}>
       <div className={styles.dependencyTitle}>Dependencies:</div>
 
       {/* Grafana dependency */}
@@ -51,14 +54,13 @@ export function PluginDetailsHeaderDependencies({
           })}
         </div>
       )}
-    </div>
+    </Stack>
   );
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
     dependencyTitle: css`
-      font-weight: ${theme.typography.fontWeightBold};
       margin-right: ${theme.spacing(0.5)};
 
       &::after {

@@ -40,6 +40,7 @@ type (
 		IntervalMS  int64
 		AliasBy     string
 		timeRange   backend.TimeRange
+		GraphPeriod string
 	}
 
 	metricQuery struct {
@@ -56,6 +57,7 @@ type (
 		Query              string
 		Preprocessor       string
 		PreprocessorType   preprocessorType
+		GraphPeriod        string
 	}
 
 	sloQuery struct {
@@ -66,6 +68,7 @@ type (
 		SelectorName     string
 		ServiceId        string
 		SloId            string
+		LookbackPeriod   string
 	}
 
 	grafanaQuery struct {
@@ -97,6 +100,7 @@ type (
 		TimeSeriesDescriptor timeSeriesDescriptor `json:"timeSeriesDescriptor"`
 		TimeSeriesData       timeSeriesData       `json:"timeSeriesData"`
 		Unit                 string               `json:"unit"`
+		NextPageToken        string               `json:"nextPageToken"`
 	}
 )
 

@@ -1,11 +1,13 @@
+import { css, cx } from '@emotion/css';
+import classNames from 'classnames';
 import React, { PureComponent } from 'react';
-import { Tooltip } from '@grafana/ui';
+
 import { selectors } from '@grafana/e2e-selectors';
+import { Tooltip, Themeable2, withTheme2, clearButtonStyles } from '@grafana/ui';
 
 import { VariableOption } from '../../types';
-import { css, cx } from '@emotion/css';
 
-export interface Props extends React.HTMLProps<HTMLUListElement> {
+export interface Props extends React.HTMLProps<HTMLUListElement>, Themeable2 {
   multi: boolean;
   values: VariableOption[];
   selectedValues: VariableOption[];
@@ -18,19 +20,19 @@ export interface Props extends React.HTMLProps<HTMLUListElement> {
   id: string;
 }
 
-export class VariableOptions extends PureComponent<Props> {
-  onToggle = (option: VariableOption) => (event: React.MouseEvent<HTMLAnchorElement>) => {
+class VariableOptions extends PureComponent<Props> {
+  onToggle = (option: VariableOption) => (event: React.MouseEvent<HTMLButtonElement>) => {
     const clearOthers = event.shiftKey || event.ctrlKey || event.metaKey;
     this.handleEvent(event);
     this.props.onToggle(option, clearOthers);
   };
 
-  onToggleAll = (event: React.MouseEvent<HTMLAnchorElement>) => {
+  onToggleAll = (event: React.MouseEvent<HTMLButtonElement>) => {
     this.handleEvent(event);
     this.props.onToggleAll();
   };
 
-  handleEvent(event: React.MouseEvent<HTMLAnchorElement>) {
+  handleEvent(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
   }
@@ -56,24 +58,30 @@ export class VariableOptions extends PureComponent<Props> {
   }
 
   renderOption(option: VariableOption, index: number) {
-    const { highlightIndex } = this.props;
+    const { highlightIndex, theme } = this.props;
     const selectClass = option.selected ? 'variable-option pointer selected' : 'variable-option pointer';
     const highlightClass = index === highlightIndex ? `${selectClass} highlighted` : selectClass;
 
     return (
       <li key={`${option.value}`}>
-        <a role="checkbox" aria-checked={option.selected} className={highlightClass} onClick={this.onToggle(option)}>
+        <button
+          role="checkbox"
+          type="button"
+          aria-checked={option.selected}
+          className={classNames(highlightClass, clearButtonStyles(theme), noStyledButton)}
+          onClick={this.onToggle(option)}
+        >
           <span className="variable-option-icon"></span>
           <span data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
             {option.text}
           </span>
-        </a>
+        </button>
       </li>
     );
   }
 
   renderMultiToggle() {
-    const { multi, selectedValues } = this.props;
+    const { multi, selectedValues, theme } = this.props;
 
     if (!multi) {
       return null;
@@ -81,12 +89,12 @@ export class VariableOptions extends PureComponent<Props> {
 
     return (
       <Tooltip content={'Clear selections'} placement={'top'}>
-        <a
+        <button
           className={`${
             selectedValues.length > 1
               ? 'variable-options-column-header many-selected'
               : 'variable-options-column-header'
-          }`}
+          } ${noStyledButton} ${clearButtonStyles(theme)}`}
           role="checkbox"
           aria-checked={selectedValues.length > 1 ? 'mixed' : 'false'}
           onClick={this.onToggleAll}
@@ -95,7 +103,7 @@ export class VariableOptions extends PureComponent<Props> {
         >
           <span className="variable-option-icon"></span>
           Selected ({selectedValues.length})
-        </a>
+        </button>
       </Tooltip>
     );
   }
@@ -107,3 +115,10 @@ const listStyles = cx(
     list-style-type: none;
   `
 );
+
+const noStyledButton = css`
+  width: 100%;
+  text-align: left;
+`;
+
+export default withTheme2(VariableOptions);

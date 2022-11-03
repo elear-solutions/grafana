@@ -1,9 +1,11 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import selectEvent from 'react-select-event';
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../types';
+
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import { createArray, createGroupBy } from '../../__mocks__/sqlUtils';
+import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../types';
+
 import SQLGroupBy from './SQLGroupBy';
 
 const { datasource } = setupMockedDataSource();
@@ -19,6 +21,8 @@ const makeSQLQuery = (sql?: SQLExpression): CloudWatchMetricsQuery => ({
   metricEditorMode: MetricEditorMode.Builder,
   sql: sql,
 });
+
+datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
 
 describe('Cloudwatch SQLGroupBy', () => {
   const baseProps = {

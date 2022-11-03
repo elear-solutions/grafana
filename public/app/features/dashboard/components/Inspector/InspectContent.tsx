@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
-import { DataSourceApi, formattedValueToString, getValueFormat, PanelData, PanelPlugin } from '@grafana/data';
+
+import { CoreApp, DataSourceApi, formattedValueToString, getValueFormat, PanelData, PanelPlugin } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { InspectMetadataTab } from 'app/features/inspector/InspectMetadataTab';
-import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
-import { QueryInspector } from 'app/features/inspector/QueryInspector';
-import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
-import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
+import { t, Trans } from 'app/core/internationalization';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
+import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
+import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
+import { InspectMetadataTab } from 'app/features/inspector/InspectMetadataTab';
+import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
+import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectTab } from 'app/features/inspector/types';
-import { DashboardModel, PanelModel } from '../../state';
+
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
+import { DashboardModel, PanelModel } from '../../state';
 
 interface Props {
   dashboard: DashboardModel;
@@ -28,7 +31,7 @@ interface Props {
   onClose: () => void;
 }
 
-export const InspectContent: React.FC<Props> = ({
+export const InspectContent = ({
   panel,
   plugin,
   dashboard,
@@ -40,7 +43,7 @@ export const InspectContent: React.FC<Props> = ({
   defaultTab,
   onDataOptionsChange,
   onClose,
-}) => {
+}: Props) => {
   const [currentTab, setCurrentTab] = useState(defaultTab ?? InspectTab.Data);
 
   if (!plugin) {
@@ -55,11 +58,12 @@ export const InspectContent: React.FC<Props> = ({
     activeTab = InspectTab.JSON;
   }
 
-  const title = getTemplateSrv().replace(panel.title, panel.scopedVars, 'text');
+  const panelTitle = getTemplateSrv().replace(panel.title, panel.scopedVars, 'text') || 'Panel';
+  const title = t('dashboard.inspect.title', 'Inspect: {{panelTitle}}', { panelTitle });
 
   return (
     <Drawer
-      title={`Inspect: ${title || 'Panel'}`}
+      title={title}
       subtitle={data && formatStats(data)}
       width="50%"
       onClose={onClose}
@@ -67,13 +71,13 @@ export const InspectContent: React.FC<Props> = ({
       scrollableContent
       tabs={
         <TabsBar>
-          {tabs.map((t, index) => {
+          {tabs.map((tab, index) => {
             return (
               <Tab
-                key={`${t.value}-${index}`}
-                label={t.label}
-                active={t.value === activeTab}
-                onChangeTab={() => setCurrentTab(t.value || InspectTab.Data)}
+                key={`${tab.value}-${index}`}
+                label={tab.label}
+                active={tab.value === activeTab}
+                onChangeTab={() => setCurrentTab(tab.value || InspectTab.Data)}
               />
             );
           })}
@@ -88,6 +92,7 @@ export const InspectContent: React.FC<Props> = ({
           options={dataOptions}
           onOptionsChange={onDataOptionsChange}
           timeZone={dashboard.timezone}
+          app={CoreApp.Dashboard}
         />
       )}
       {data && activeTab === InspectTab.Meta && (
@@ -116,5 +121,9 @@ function formatStats(data: PanelData) {
   const requestTime = request.endTime ? request.endTime - request.startTime : 0;
   const formatted = formattedValueToString(getValueFormat('ms')(requestTime));
 
-  return `${queryCount} queries with total query time of ${formatted}`;
+  return (
+    <Trans i18nKey="dashboard.inspect.subtitle">
+      {{ queryCount }} queries with total query time of {{ formatted }}
+    </Trans>
+  );
 }

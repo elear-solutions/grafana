@@ -1,4 +1,7 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
+
+import { PromApplication } from '../../../types/unified-alerting-dto';
+
 import { QueryEditorMode } from './querybuilder/shared/types';
 
 export interface PromQuery extends DataQuery {
@@ -19,8 +22,6 @@ export interface PromQuery extends DataQuery {
   showingTable?: boolean;
   /** Code, Builder or Explain */
   editorMode?: QueryEditorMode;
-  /** Controls if the query preview is shown */
-  editorPreview?: boolean;
 }
 
 export interface PromOptions extends DataSourceJsonData {
@@ -31,6 +32,8 @@ export interface PromOptions extends DataSourceJsonData {
   customQueryParameters?: string;
   disableMetricsLookup?: boolean;
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
+  prometheusType?: PromApplication;
+  prometheusVersion?: string;
 }
 
 export enum PromQueryType {

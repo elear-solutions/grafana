@@ -1,5 +1,7 @@
-import React, { PureComponent, ChangeEvent } from 'react';
 import { css } from '@emotion/css';
+import { isNumber } from 'lodash';
+import React, { PureComponent, ChangeEvent } from 'react';
+
 import {
   Threshold,
   sortThresholds,
@@ -8,17 +10,16 @@ import {
   SelectableValue,
   GrafanaTheme,
 } from '@grafana/data';
-import { isNumber } from 'lodash';
 import {
   Input,
   colors,
   ColorPicker,
-  Icon,
   ThemeContext,
   Button,
   Label,
   RadioButtonGroup,
   stylesFactory,
+  IconButton,
 } from '@grafana/ui';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
@@ -197,7 +198,12 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
           </div>
         }
         suffix={
-          <Icon className={styles.trashIcon} name="trash-alt" onClick={() => this.onRemoveThreshold(threshold)} />
+          <IconButton
+            aria-label={`Remove ${ariaLabel}`}
+            className={styles.trashIcon}
+            name="trash-alt"
+            onClick={() => this.onRemoveThreshold(threshold)}
+          />
         }
       />
     );
@@ -325,6 +331,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme): ThresholdStyles => {
     trashIcon: css`
       color: ${theme.colors.textWeak};
       cursor: pointer;
+      margin-right: 0;
 
       &:hover {
         color: ${theme.colors.text};
