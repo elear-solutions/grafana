@@ -208,6 +208,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 			"refresh_token", fmt.Sprintf("%v", token.RefreshToken),
 		)
 	}
+	fmt.Sprintf("%v", token, "token "),
 
 	// set up oauth2 client
 	client := connect.Client(oauthCtx, token)
