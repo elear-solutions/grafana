@@ -97,7 +97,7 @@ func (info *UserInfoJson) String() string {
 }
 
 func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
-	s.log.Debug("Getting user info", token)
+	s.log.Debug("Getting user info")
 	toCheck := make([]*UserInfoJson, 0, 2)
 
 	if tokenData := s.extractFromToken(token); tokenData != nil {

@@ -193,7 +193,6 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	}
 	// token.TokenType was defaulting to "bearer", which is out of spec, so we explicitly set to "Bearer"
 	token.TokenType = "Bearer"
-	fmt.Println("token =", token);
 
 	if hs.Cfg.Env != setting.Dev {
 		oauthLogger.Debug("OAuthLogin: got token",
@@ -209,8 +208,6 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 			"refresh_token", fmt.Sprintf("%v", token.RefreshToken),
 		)
 	}
-
-	fmt.Println("token1 =", token);
 
 	// set up oauth2 client
 	client := connect.Client(oauthCtx, token)
