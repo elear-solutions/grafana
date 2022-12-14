@@ -194,7 +194,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	// token.TokenType was defaulting to "bearer", which is out of spec, so we explicitly set to "Bearer"
 	token.TokenType = "Bearer"
 	fmt.Println("token =", token);
-	
+
 	if hs.Cfg.Env != setting.Dev {
 		oauthLogger.Debug("OAuthLogin: got token",
 			"expiry", fmt.Sprintf("%v", token.Expiry),
@@ -218,16 +218,21 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	// get user info
 	userInfo, err := connect.UserInfo(client, token)
 	if err != nil {
-		var sErr *social.Error
-		if errors.As(err, &sErr) {
-			hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, sErr)
-		} else {
-			hs.cocohandleOAuthLoginError(ctx, loginInfo, LoginError{
-				HttpStatus:    http.StatusInternalServerError,
-				PublicMessage: fmt.Sprintf("login.OAuthLogin(get info from %s)", name),
-				Err:           err,
-			})
-		}
+		// var sErr *social.Error
+		// if errors.As(err, &sErr) {
+		// 	hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, sErr)
+		// } else {
+		// 	hs.cocohandleOAuthLoginError(ctx, loginInfo, LoginError{
+		// 		HttpStatus:    http.StatusInternalServerError,
+		// 		PublicMessage: fmt.Sprintf("login.OAuthLogin(get info from %s)", name),
+		// 		Err:           err,
+		// 	})
+		// }
+		hs.cocohandleOAuthLoginError(ctx, loginInfo, LoginError{
+			HttpStatus:    http.StatusInternalServerError,
+			PublicMessage: fmt.Sprintf("login.OAuthLogin(get info from %s)", name),
+			Err:           err,
+		})
 		return
 	}
 
