@@ -370,7 +370,7 @@ func (hs *HTTPServer) handleOAuthLoginError(ctx *models.ReqContext, info models.
 
 func (hs *HTTPServer) cocohandleOAuthLoginError(ctx *models.ReqContext, info models.LoginInfo, err LoginError) {
 	// ctx.Handle(hs.Cfg, err.HttpStatus, err.PublicMessage, err.Err)
-	ctx.Redirect("https://error.getcoco.buzz/")
+	ctx.Redirect("https://www.getcoco.buzz/error-404")
 	info.Error = err.Err
 	if info.Error == nil {
 		info.Error = errors.New(err.PublicMessage)
